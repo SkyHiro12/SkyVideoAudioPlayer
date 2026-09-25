@@ -1,0 +1,29 @@
+## Build Results & Binaries
+[Bb]in/
+[Oo]bj/
+[Rr]elease/
+dist_test/
+SkyPlayer/
+SkyPlayer.exe
+*.bak
+crash.log
+
+## Visual Studio & IDE files
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+## WinUI 3 / Windows App SDK Generated Files
+Generated Files/
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_pkginfo.txt
+
+## OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini

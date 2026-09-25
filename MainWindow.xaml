@@ -1,0 +1,358 @@
+<Window
+    x:Class="FluentPlayer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="SkyPlayer">
+
+    <Grid x:Name="RootGrid" Background="#0A0A0A" PointerMoved="OnPointerMoved" KeyDown="OnKeyDown"
+          AllowDrop="True" DragOver="OnRootDragOver" Drop="OnRootDrop" PointerWheelChanged="OnRootPointerWheelChanged">
+        <!-- Нативный видеоплеер -->
+        <MediaPlayerElement x:Name="PlayerElement" 
+                            AreTransportControlsEnabled="False" 
+                            HorizontalAlignment="Stretch" 
+                            VerticalAlignment="Stretch" 
+                            Stretch="Uniform"
+                            PointerPressed="PlayerElement_PointerPressed"
+                            DoubleTapped="PlayerElement_DoubleTapped"/>
+
+        <!-- Всплывающее OSD-уведомление (громкость, масштаб UI, скорость, перемотка) -->
+        <Border x:Name="OsdBadge" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,48,0,0" Padding="16,9" CornerRadius="22"
+                Background="#E6141414" BorderBrush="#33FFFFFF" BorderThickness="1"
+                Canvas.ZIndex="30" IsHitTestVisible="False">
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <FontIcon x:Name="OsdIcon" Glyph="&#xE799;" FontSize="16" Foreground="#60CDFF" VerticalAlignment="Center"/>
+                <TextBlock x:Name="OsdText" Text="Масштаб UI: 100%" FontSize="13" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Оверлей субтитров (не масштабируется с UI, размер управляется настройками шрифта) -->
+        <Border x:Name="SubtitleContainer" Visibility="Collapsed" 
+                VerticalAlignment="Bottom" HorizontalAlignment="Center" 
+                Margin="40,0,40,160" Padding="16,8" CornerRadius="8" 
+                Background="#D9000000" Canvas.ZIndex="8" IsHitTestVisible="False">
+            <TextBlock x:Name="SubtitleTextBlock" FontSize="22" FontWeight="SemiBold" 
+                       Foreground="White" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="960"/>
+        </Border>
+
+        <!-- Информационная панель для аудио -->
+        <StackPanel x:Name="AudioInfoPanel" Visibility="Collapsed" HorizontalAlignment="Center" 
+                    VerticalAlignment="Center" Spacing="20" Canvas.ZIndex="5"
+                    RenderTransformOrigin="0.5,0.5">
+            <StackPanel.RenderTransform>
+                <ScaleTransform x:Name="AudioInfoScale" ScaleX="1.0" ScaleY="1.0"/>
+            </StackPanel.RenderTransform>
+            
+            <Border x:Name="AudioCoverBorder" Width="240" Height="240" CornerRadius="24" 
+                    BorderBrush="#2BFFFFFF" BorderThickness="1" HorizontalAlignment="Center">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#2A223B" Offset="0.0"/>
+                        <GradientStop Color="#14111D" Offset="1.0"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid>
+                    <Grid x:Name="VinylPlaceholderGrid">
+                        <Border Width="200" Height="200" CornerRadius="100" BorderBrush="#18FFFFFF" BorderThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="150" Height="150" CornerRadius="75" BorderBrush="#12FFFFFF" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Border Width="100" Height="100" CornerRadius="50" BorderBrush="#0DFFFFFF" BorderThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        
+                        <Border Width="72" Height="72" CornerRadius="36" Background="#26FFFFFF" 
+                                HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xEC4F;" FontSize="32" Foreground="#EEFFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+
+                    <Image x:Name="AlbumCoverImage" Stretch="UniformToFill" Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+
+            <StackPanel HorizontalAlignment="Center" Spacing="4">
+                <TextBlock x:Name="TrackTitleText" Text="Название трека" FontSize="22" FontWeight="SemiBold" 
+                           Foreground="{ThemeResource ForegroundBrush}" HorizontalAlignment="Center" TextWrapping="Wrap" MaxWidth="500" TextAlignment="Center"/>
+                <TextBlock x:Name="TrackArtistText" Text="Исполнитель" FontSize="15" 
+                           Foreground="#AAAAAA" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="TrackAlbumText" Text="Альбом" FontSize="13" 
+                           Foreground="#777777" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Единая панель управления снизу со встроенным масштабированием -->
+        <Border x:Name="BottomPanel" VerticalAlignment="Bottom" HorizontalAlignment="Center"
+                Background="{ThemeResource PanelBackgroundBrush}" CornerRadius="14" Margin="0,0,0,24" Padding="18,12" Canvas.ZIndex="10"
+                RenderTransformOrigin="0.5,1.0">
+            <Border.RenderTransform>
+                <ScaleTransform x:Name="BottomPanelScale" ScaleX="1.0" ScaleY="1.0"/>
+            </Border.RenderTransform>
+
+            <StackPanel Orientation="Vertical" Spacing="8">
+                
+                <!-- ИНТЕРАКТИВНАЯ ДОРОЖКА ВРЕМЕНИ С МГНОВЕННЫМ ПЕРЕХОДОМ ПО КЛИКУ И ПРЕВЬЮ -->
+                <Grid x:Name="TimelineRowGrid" Width="660" Margin="4,2,4,6" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Текущее время -->
+                    <TextBlock x:Name="CurrentTimeText" Grid.Column="0" Text="00:00" FontSize="12" 
+                               Foreground="#CCCCCC" VerticalAlignment="Center" MinWidth="54" TextAlignment="Left" Margin="0,0,8,0"/>
+
+                    <!-- Интерактивный трек времени -->
+                    <Grid x:Name="TimelineTrackContainer" Grid.Column="1" Height="26" VerticalAlignment="Center"
+                          Background="Transparent"
+                          PointerPressed="Timeline_PointerPressed"
+                          PointerMoved="Timeline_PointerMoved"
+                          PointerReleased="Timeline_PointerReleased"
+                          PointerCaptureLost="Timeline_PointerCaptureLost"
+                          PointerEntered="Timeline_PointerEntered"
+                          PointerExited="Timeline_PointerExited"
+                          PointerWheelChanged="Timeline_PointerWheelChanged"
+                          SizeChanged="TimelineTrackContainer_SizeChanged">
+                        
+                        <!-- Фоновая подложка трека -->
+                        <Border x:Name="TimelineBgTrack" Height="5" CornerRadius="2.5" 
+                                Background="#2BFFFFFF" VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+
+                        <!-- Полоса буферизации -->
+                        <Border x:Name="TimelineBufferTrack" Height="5" CornerRadius="2.5" 
+                                Background="#33FFFFFF" VerticalAlignment="Center" HorizontalAlignment="Left" Width="0"/>
+
+                        <!-- Полоса предпросмотра при наведении курсора -->
+                        <Border x:Name="TimelineHoverTrack" Height="5" CornerRadius="2.5" 
+                                Background="#44FFFFFF" VerticalAlignment="Center" HorizontalAlignment="Left" Width="0" Visibility="Collapsed"/>
+
+                        <!-- Активная полоса воспроизведения -->
+                        <Border x:Name="TimelineProgressTrack" Height="5" CornerRadius="2.5" 
+                                VerticalAlignment="Center" HorizontalAlignment="Left" Width="0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#7C3AED" Offset="0.0"/>
+                                    <GradientStop Color="#3B82F6" Offset="1.0"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                        </Border>
+
+                        <!-- Ползунок времени (Scrubber Thumb) -->
+                        <Canvas x:Name="TimelineThumbCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" IsHitTestVisible="False">
+                            <Border x:Name="TimelineThumb" Width="13" Height="13" CornerRadius="6.5" 
+                                    Background="White" BorderBrush="#3B82F6" BorderThickness="2"
+                                    Canvas.Left="-6.5" Canvas.Top="6.5"/>
+                        </Canvas>
+                    </Grid>
+
+                    <!-- Общее / Оставшееся время видео (клик переключает формат) -->
+                    <TextBlock x:Name="TotalTimeText" Grid.Column="2" Text="00:00" FontSize="12" 
+                               Foreground="#888888" VerticalAlignment="Center" MinWidth="54" TextAlignment="Right" Margin="8,0,0,0"
+                               PointerPressed="TotalTimeText_PointerPressed"
+                               ToolTipService.ToolTip="Нажмите, чтобы переключить оставшееся/общее время"/>
+                </Grid>
+
+                <!-- Верхний ряд: Открыть, Аудио, Субтитры, Настройки -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                    <Button Click="OpenFile_Click" Height="36">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xED25;" FontSize="14"/>
+                            <TextBlock Text="Открыть" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <ComboBox x:Name="AudioTracksCombo" PlaceholderText="Аудиодорожка" Width="230" Height="36" SelectionChanged="OnAudioTrackChanged"/>
+                    <ComboBox x:Name="SubtitlesCombo" PlaceholderText="Субтитры" Width="190" Height="36" SelectionChanged="OnSubtitleChanged"/>
+                    <Button x:Name="AddSubtitleButton" Click="AddSubtitle_Click" ToolTipService.ToolTip="Добавить файл субтитров (.ass, .srt, .vtt)" Width="36" Height="36" Padding="0">
+                        <FontIcon Glyph="&#xE710;" FontSize="14"/>
+                    </Button>
+
+                    <Button Click="SettingsToggle_Click" ToolTipService.ToolTip="Настройки" Width="36" Height="36" Padding="0">
+                        <FontIcon Glyph="&#xE713;" FontSize="15"/>
+                    </Button>
+                </StackPanel>
+
+                <!-- Нижний ряд: Управление воспроизведением -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                    <Button Click="SkipBack_Click" ToolTipService.ToolTip="Перемотка назад" Width="38" Height="38">
+                        <FontIcon Glyph="&#xEB9E;" FontSize="15"/>
+                    </Button>
+
+                    <Button Click="PlayPause_Click" ToolTipService.ToolTip="Воспроизведение / Пауза (Пробел)" Width="44" Height="44">
+                        <FontIcon x:Name="PlayPauseIcon" Glyph="&#xE768;" FontSize="18"/>
+                    </Button>
+
+                    <Button Click="SkipForward_Click" ToolTipService.ToolTip="Перемотка вперед" Width="38" Height="38">
+                        <FontIcon Glyph="&#xEB9D;" FontSize="15"/>
+                    </Button>
+
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="10,0,10,0">
+                        <Button Click="MuteToggle_Click" ToolTipService.ToolTip="Включить / отключить звук (M)" Width="32" Height="32" Padding="0" Background="Transparent" BorderThickness="0">
+                            <FontIcon x:Name="VolumeIcon" Glyph="&#xE767;" FontSize="15" Foreground="{ThemeResource ForegroundBrush}"/>
+                        </Button>
+                        <Slider x:Name="VolumeSlider" Width="110" Minimum="0" Maximum="100" Value="100" 
+                                ValueChanged="OnVolumeChanged" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <Button Click="Fullscreen_Click" ToolTipService.ToolTip="Во весь экран (F11 / F)" Width="38" Height="38">
+                        <FontIcon x:Name="FullscreenIcon" Glyph="&#xE740;" FontSize="15"/>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Всплывающая панель настроек со шкалой масштабирования интерфейса -->
+        <Border x:Name="SettingsOverlay" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Width="360" Margin="0,0,24,110" Padding="18,16,10,18" CornerRadius="12" Canvas.ZIndex="20"
+                Background="{ThemeResource SettingsPanelBackgroundBrush}" BorderThickness="1" BorderBrush="#33FFFFFF">
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,8,14">
+                    <TextBlock Text="Настройки" FontWeight="Bold" FontSize="16" Foreground="{ThemeResource ForegroundBrush}" VerticalAlignment="Center"/>
+                    <Button Click="SettingsClose_Click" HorizontalAlignment="Right" Width="32" Height="32" Padding="0">
+                        <FontIcon Glyph="&#xE711;" FontSize="12"/>
+                    </Button>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="450" Padding="0,0,12,0">
+                    <StackPanel Spacing="14" Margin="0,0,2,0">
+                        
+                        <!-- МАСШТАБ ИНТЕРФЕЙСА (UI SCALE) -->
+                        <StackPanel Spacing="8">
+                            <Grid>
+                                <TextBlock Text="Масштаб интерфейса (UI)" Foreground="{ThemeResource ForegroundBrush}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <Border HorizontalAlignment="Right" Background="#2660CDFF" Padding="8,2" CornerRadius="4">
+                                    <TextBlock x:Name="UiScaleValueText" Text="100%" Foreground="#60CDFF" FontSize="12" FontWeight="Bold"/>
+                                </Border>
+                            </Grid>
+
+                            <!-- Слайдер масштаба с кнопками - / + и сбросом на 100% -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Button Click="UiScaleMinus_Click" ToolTipService.ToolTip="Уменьшить масштаб (Ctrl + -)" Width="32" Height="32" Grid.Column="0" Padding="0">
+                                    <FontIcon Glyph="&#xE738;" FontSize="11"/>
+                                </Button>
+
+                                <Slider x:Name="UiScaleSlider" Minimum="70" Maximum="200" StepFrequency="5" SmallChange="5" LargeChange="10"
+                                        Value="100" ValueChanged="OnUiScaleSliderChanged"
+                                        Margin="8,0,8,0" Grid.Column="1" VerticalAlignment="Center"/>
+
+                                <Button Click="UiScalePlus_Click" ToolTipService.ToolTip="Увеличить масштаб (Ctrl + +)" Width="32" Height="32" Grid.Column="2" Padding="0">
+                                    <FontIcon Glyph="&#xE710;" FontSize="11"/>
+                                </Button>
+
+                                <Button Click="UiScaleReset_Click" ToolTipService.ToolTip="Сбросить на 100% (Ctrl + 0)" Width="32" Height="32" Margin="4,0,0,0" Grid.Column="3" Padding="0">
+                                    <FontIcon Glyph="&#xE777;" FontSize="11"/>
+                                </Button>
+                            </Grid>
+
+                            <!-- Быстрые пресеты масштаба -->
+                            <Grid HorizontalAlignment="Stretch">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Content="75%" Click="OnUiScalePreset_Click" Tag="0.75" HorizontalAlignment="Stretch" Margin="0,0,2,0" Padding="0,3" FontSize="11"/>
+                                <Button Content="90%" Click="OnUiScalePreset_Click" Tag="0.90" Grid.Column="1" HorizontalAlignment="Stretch" Margin="2,0,2,0" Padding="0,3" FontSize="11"/>
+                                <Button Content="100%" Click="OnUiScalePreset_Click" Tag="1.00" Grid.Column="2" HorizontalAlignment="Stretch" Margin="2,0,2,0" Padding="0,3" FontSize="11"/>
+                                <Button Content="125%" Click="OnUiScalePreset_Click" Tag="1.25" Grid.Column="3" HorizontalAlignment="Stretch" Margin="2,0,2,0" Padding="0,3" FontSize="11"/>
+                                <Button Content="150%" Click="OnUiScalePreset_Click" Tag="1.50" Grid.Column="4" HorizontalAlignment="Stretch" Margin="2,0,2,0" Padding="0,3" FontSize="11"/>
+                                <Button Content="200%" Click="OnUiScalePreset_Click" Tag="2.00" Grid.Column="5" HorizontalAlignment="Stretch" Margin="2,0,0,0" Padding="0,3" FontSize="11"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <ToggleSwitch x:Name="AlwaysOnTopToggle" Header="Поверх всех окон" Toggled="OnAlwaysOnTopToggled" OffContent="Выкл" OnContent="Вкл"/>
+                        <ToggleSwitch x:Name="LoopToggle" Header="Повтор (Зацикливание)" Toggled="OnLoopToggled" OffContent="Выкл" OnContent="Вкл"/>
+                        <ToggleSwitch x:Name="ClickPauseToggle" Header="Пауза по клику на видео" IsOn="True" OffContent="Выкл" OnContent="Вкл"/>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Скорость воспроизведения" Foreground="{ThemeResource ForegroundBrush}" FontSize="13"/>
+                            <ComboBox x:Name="SpeedCombo" SelectedIndex="2" SelectionChanged="OnSpeedChanged" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="0.5x" Tag="0.5"/>
+                                <ComboBoxItem Content="0.75x" Tag="0.75"/>
+                                <ComboBoxItem Content="1.0x (Обычная)" Tag="1.0"/>
+                                <ComboBoxItem Content="1.25x" Tag="1.25"/>
+                                <ComboBoxItem Content="1.5x" Tag="1.5"/>
+                                <ComboBoxItem Content="2.0x" Tag="2.0"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel x:Name="VideoOnlySettingsPanel" Spacing="14">
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Размер субтитров" Foreground="{ThemeResource ForegroundBrush}" FontSize="13"/>
+                                <ComboBox x:Name="SubtitleSizeCombo" SelectedIndex="1" SelectionChanged="OnSubtitleSizeChanged" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="Мелкий (18px)" Tag="18"/>
+                                    <ComboBoxItem Content="Стандартный (22px)" Tag="22"/>
+                                    <ComboBoxItem Content="Крупный (26px)" Tag="26"/>
+                                    <ComboBoxItem Content="Очень крупный (32px)" Tag="32"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Задержка субтитров (смещение)" Foreground="{ThemeResource ForegroundBrush}" FontSize="13"/>
+                                <ComboBox x:Name="SubDelayCombo" SelectedIndex="3" SelectionChanged="OnSubDelayChanged" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="-2.0 сек" Tag="-2.0"/>
+                                    <ComboBoxItem Content="-1.0 сек" Tag="-1.0"/>
+                                    <ComboBoxItem Content="-0.5 сек" Tag="-0.5"/>
+                                    <ComboBoxItem Content="0.0 сек (Синхронно)" Tag="0.0"/>
+                                    <ComboBoxItem Content="+0.5 сек" Tag="0.5"/>
+                                    <ComboBoxItem Content="+1.0 сек" Tag="1.0"/>
+                                    <ComboBoxItem Content="+2.0 сек" Tag="2.0"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="Масштаб видео" Foreground="{ThemeResource ForegroundBrush}" FontSize="13"/>
+                                <ComboBox x:Name="StretchCombo" SelectedIndex="0" SelectionChanged="OnStretchChanged" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="По размеру (сохранять пропорции)" Tag="Uniform"/>
+                                    <ComboBoxItem Content="Заполнить экран (с обрезкой краев)" Tag="UniformToFill"/>
+                                    <ComboBoxItem Content="Растянуть (без полей)" Tag="Fill"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Шаг перемотки (сек)" Foreground="{ThemeResource ForegroundBrush}" FontSize="13"/>
+                            <ComboBox x:Name="SkipIntervalCombo" SelectedIndex="1" SelectionChanged="OnSkipIntervalChanged" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="5 секунд" Tag="5"/>
+                                <ComboBoxItem Content="10 секунд" Tag="10"/>
+                                <ComboBoxItem Content="15 секунд" Tag="15"/>
+                                <ComboBoxItem Content="30 секунд" Tag="30"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Тема оформления" Foreground="{ThemeResource ForegroundBrush}" FontSize="13"/>
+                            <ComboBox x:Name="ThemeCombo" SelectedIndex="0" SelectionChanged="OnThemeChanged" HorizontalAlignment="Stretch">
+                                <ComboBoxItem Content="Тёмная (Dark)" Tag="Dark"/>
+                                <ComboBoxItem Content="Светлая (Light)" Tag="Light"/>
+                                <ComboBoxItem Content="Ультрафиолет (Ultraviolet)" Tag="Ultraviolet"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Всплывающий индикатор времени над полосой перемотки (поверх всех панелей, не обрезается) -->
+        <Border x:Name="TimelineHoverBadge" Visibility="Collapsed"
+                HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="0,0,0,0" Padding="8,4" CornerRadius="6"
+                Background="#E6181818" BorderBrush="#33FFFFFF" BorderThickness="1"
+                IsHitTestVisible="False">
+            <TextBlock x:Name="TimelineHoverBadgeText" Text="00:00" FontSize="11" FontWeight="SemiBold" Foreground="White"/>
+        </Border>
+    </Grid>
+</Window>
