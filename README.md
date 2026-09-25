@@ -1,3 +1,7 @@
+<p align="center">
+  <b>English</b> | <a href="README.ru.md">Русский</a>
+</p>
+
 # 🎬 SkyPlayer (FluentPlayer)
 
 <p align="center">
@@ -5,8 +9,8 @@
 </p>
 
 <p align="center">
-  <b>Современный, легковесный медиаплеер нового поколения для Windows 10 и 11</b><br/>
-  Разработан на <b>WinUI 3</b>, <b>Windows App SDK</b> и <b>.NET 8</b> с поддержкой нативного Fluent Design.
+  <b>Next-generation, lightweight media player for Windows 10 & 11</b><br/>
+  Engineered with <b>WinUI 3</b>, <b>Windows App SDK</b>, and <b>.NET 8</b> with native Fluent Design.
 </p>
 
 <p align="center">
@@ -17,92 +21,100 @@
   <img src="https://img.shields.io/badge/License-MIT-success" alt="License" />
 </p>
 
----
-
-## ✨ Основные возможности (Features)
-
-### 🎨 Премиальный дизайн Fluent Design
-- Полупрозрачные материалы **Acrylic** и **Mica**, адаптивные скругления и микроанимации.
-- Темы оформления: **Тёмная (Dark)**, **Светлая (Light)** и **Ультрафиолет (Ultraviolet)** с динамической сменой палитры и градиентов шкалы времени.
-- Автоматическое скрытие панели управления и системного курсора при бездействии.
-
-### ⏱️ Умная шкала времени с превью
-- **Мгновенный переход по клику**: кликайте в любую точку дорожки для точной перемотки.
-- **Индикатор предпросмотра (Hover Badge)**: парящий бейдж над шкалой времени с отображением таймкода без выхода за границы экрана.
-- **Интерактивная полоса наведения**: визуальная подсветка участка дорожки до курсора.
-- Отображение полосы буферизации сети и переключение между оставшимся / общим временем.
-
-### 🔍 Гибкое масштабирование интерфейса (UI Scaling)
-- Плавный слайдер от **70% до 200%** с шагом 5% и выводом точного процента.
-- Кнопки быстрого выбора пресетов: `75%`, `90%`, `100%`, `125%`, `150%`, `200%`.
-- Горячие клавиши `Ctrl` + `+` / `Ctrl` + `-` и масштабирование колесом мыши (`Ctrl` + Wheel).
-- Кнопка мгновенного сброса на 100% (`Ctrl` + `0`).
-- Панель настроек защищена от масштабирования за границы экрана — регуляторы всегда остаются доступными.
-
-### 💬 Продвинутая работа с субтитрами
-- Поддержка внешних и встроенных форматов: `.srt`, `.ass`, `.ssa`, `.vtt`.
-- Парсинг встроенных текстовых дорожек из контейнеров MP4/MOV и MKV.
-- Автоматический поиск и подключение локальных файлов субтитров в папке с видео.
-- Независимый размер шрифта субтитров (не ломается при изменении масштаба UI).
-- Адаптивная высота субтитров: поднимаются над элементами управления при их появлении и опускаются при скрытии.
-- Коррекция рассинхронизации (задержка субтитров от -5 до +5 секунд).
-
-### 🎵 Музыкальный плеер (Audio Mode)
-- Распознавание аудиофайлов (`.mp3`, `.flac`, `.wav`, `.aac`, `.m4a`, `.ogg`, `.opus`).
-- Извлечение метаданных (Название трека, Исполнитель, Альбом).
-- Отображение встроенных обложек альбомов или стилизованной пластинки с анимацией.
-
-### 📦 Чистая структура сборки (Clean Portable Launcher)
-- В корневой папке находится **всего один компактный `.exe`** с иконкой плеера.
-- Все системные зависимости, библиотеки (200+ DLL) и ассеты аккуратно изолированы в подпапке `app/`.
+<p align="center">
+  <a href="https://github.com/SkyHiro12/SkyVideoAudioPlayer/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Latest%20Release-brightgreen?style=for-the-badge&logo=windows" alt="Download SkyPlayer" />
+  </a>
+</p>
 
 ---
 
-## ⌨️ Горячие клавиши (Hotkeys)
+## ✨ Features
 
-| Клавиша | Действие |
+### 🎨 Native Fluent Design
+- Translucent **Acrylic** and **Mica** backdrops with subtle micro-animations and rounded controls.
+- Three built-in themes: **Dark**, **Light**, and vibrant **Ultraviolet** with adaptive timeline gradients.
+- Automatic control bar and cursor auto-hiding during playback.
+
+### ⏱️ Interactive Precision Timeline
+- **Instant Click-to-Seek**: Click anywhere on the track to jump precisely to that timestamp.
+- **Hover Preview Badge**: A floating badge smoothly tracks your mouse above the timeline with no boundary clipping.
+- **Visual Hover Scrubbing**: Live illuminated track segment showing the preview range up to your cursor.
+- Download / network buffer progress bar with easy switching between remaining and total duration.
+
+### 🔍 Dynamic UI Scaling (70% - 200%)
+- Smooth slider with fine **5% increments** and real-time percentage readout.
+- Quick preset buttons: `75%`, `90%`, `100%`, `125%`, `150%`, `200%`.
+- Keyboard shortcuts: `Ctrl` + `+` / `Ctrl` + `-` and mouse wheel zoom (`Ctrl` + Wheel).
+- One-click instant reset to default (`Ctrl` + `0`).
+- The settings overlay is shielded from scaling out of view, ensuring control elements are always accessible.
+
+### 💬 Intelligent Subtitle Engine
+- Broad format compatibility: `.srt`, `.ass`, `.ssa`, and `.vtt`.
+- Embedded subtitle stream extraction directly from MP4, MOV, and MKV containers.
+- Automatic detection and loading of subtitle files from the video directory.
+- Subtitle font size is independent of the UI scale.
+- Adaptive positioning: Subtitles float cleanly above control bars when visible, then glide down to the standard reading position when controls auto-hide.
+- Real-time subtitle sync offset adjustment ($\pm 5$ seconds).
+
+### 🎵 Dedicated Music & Audio Player Mode
+- Instant recognition of audio files (`.mp3`, `.flac`, `.wav`, `.aac`, `.m4a`, `.ogg`, `.opus`).
+- Automatic ID3 / metadata tag extraction (Track title, Artist, Album).
+- Embedded album art display with an animated vinyl record placeholder fallback.
+
+### 📦 Clean & Portable Package
+- Clean root folder with **only a single `SkyPlayer.exe` executable**.
+- All 200+ runtime DLLs, DirectX assets, and dependencies are neatly isolated in an `app/` subfolder.
+- Fully portable — run from anywhere without complex installers.
+
+---
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
 | :--- | :--- |
-| <kbd>Space</kbd> / <kbd>K</kbd> | Воспроизведение / Пауза |
-| <kbd>←</kbd> / <kbd>J</kbd> | Перемотка назад (настраиваемый шаг: 5, 10, 15, 30 сек) |
-| <kbd>→</kbd> / <kbd>L</kbd> | Перемотка вперед |
-| <kbd>↑</kbd> / <kbd>↓</kbd> | Громкость выше / ниже (+/- 5%) |
-| <kbd>M</kbd> | Включение / выключение звука (Mute) |
-| <kbd>F</kbd> / <kbd>F11</kbd> | Полноэкранный режим (Fullscreen) |
-| <kbd>[</kbd> / <kbd>]</kbd> | Скорость воспроизведения (-0.25x / +0.25x) |
-| <kbd>,</kbd> / <kbd>.</kbd> | Покадровый переход назад / вперед (+/- 0.04 сек) |
-| <kbd>Ctrl</kbd> + <kbd>+</kbd> | Увеличение масштаба интерфейса (+5%) |
-| <kbd>Ctrl</kbd> + <kbd>-</kbd> | Уменьшение масштаба интерфейса (-5%) |
-| <kbd>Ctrl</kbd> + <kbd>0</kbd> | Сброс масштаба интерфейса на 100% |
-| <kbd>Ctrl</kbd> + <kbd>Wheel</kbd> | Плавное масштабирование интерфейса колесиком |
-| <kbd>S</kbd> | Открыть / закрыть панель настроек |
-| <kbd>Esc</kbd> | Закрыть панель настроек / выйти из полноэкранного режима |
+| <kbd>Space</kbd> / <kbd>K</kbd> | Play / Pause |
+| <kbd>←</kbd> / <kbd>J</kbd> | Skip backward (configurable: 5s, 10s, 15s, 30s) |
+| <kbd>→</kbd> / <kbd>L</kbd> | Skip forward |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Volume Up / Down ($\pm 5\%$) |
+| <kbd>M</kbd> | Toggle Mute |
+| <kbd>F</kbd> / <kbd>F11</kbd> | Toggle Fullscreen |
+| <kbd>[</kbd> / <kbd>]</kbd> | Playback speed ($\pm 0.25x$) |
+| <kbd>,</kbd> / <kbd>.</kbd> | Step backward / forward one frame ($\pm 0.04s$) |
+| <kbd>Ctrl</kbd> + <kbd>+</kbd> | Zoom UI in (+5%) |
+| <kbd>Ctrl</kbd> + <kbd>-</kbd> | Zoom UI out (-5%) |
+| <kbd>Ctrl</kbd> + <kbd>0</kbd> | Reset UI scale to 100% |
+| <kbd>Ctrl</kbd> + <kbd>Wheel</kbd> | Smooth UI zoom with mouse wheel |
+| <kbd>S</kbd> | Open / close Settings overlay |
+| <kbd>Esc</kbd> | Dismiss settings / exit fullscreen |
 
 ---
 
-## 🛠️ Сборка проекта из исходного кода (Build from source)
+## 🛠️ Building from Source
 
-### Требования
-* Windows 10 (версия 19041 или выше) / Windows 11
+### Prerequisites
+* Windows 10 (Build 19041+) or Windows 11
 * [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-* Платформа: **x64**
+* Platform: **x64**
 
-### Сборка Debug-версии
+### Build Debug
 ```powershell
 dotnet build -p:Platform=x64
 ```
 
-### Сборка чистой автономной Release-папки
+### Build Clean Portable Release
 ```powershell
-# 1. Публикация плеера в подпапку app
+# 1. Publish all player dependencies to app/ subfolder
 dotnet publish -c Release -p:Platform=x64 -o "Release\app"
 
-# 2. Компиляция компактного лаунчера в корень Release
+# 2. Compile lightweight launcher to Release root
 & "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /target:winexe /win32icon:"icon.ico" /out:"Release\SkyPlayer.exe" "scratch\Launcher.cs"
 ```
-После этого в папке `Release` будет только `SkyPlayer.exe` и подпапка `app/`.
+
+The resulting `Release` folder will contain only `SkyPlayer.exe` and the `app/` folder.
 
 ---
 
-## 📄 Лицензия (License)
+## 📄 License
 
-Проект распространяется под свободной лицензией **MIT**. Подробности в файле [LICENSE](LICENSE).
+This project is open-source software licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
